@@ -8,21 +8,44 @@ const useField = (type) => {
     setValue(event.target.value)
   }
 
+  const reset = () => {
+    setValue('')
+  }
+
   return {
     type,
     value,
-    onChange
+    onChange,
+    reset
   }
 }
 
 const useResource = (baseUrl) => {
   const [resources, setResources] = useState([])
 
-  // ...
+  useEffect(() => {
+    const getAll = async () => {
+      try {
+        const response = await axios.get(`${baseUrl}`)
+        setResources(response.data)
+      } catch (error) {
+        console.log(`something terrible occured: ${error}`)
+      }
+    }
 
-  const create = (resource) => {
-    // ...
+    getAll()
+  }, [baseUrl])
+
+  const create = async (resource) => {
+    try {
+      const response = await axios.post(baseUrl, resource)
+      setResources(old => [...old, response.data])
+      return response.data
+    } catch (error) {
+      console.error(`Error creating resource: ${error}`)
+    }
   }
+  
 
   const service = {
     create
@@ -44,11 +67,14 @@ const App = () => {
   const handleNoteSubmit = (event) => {
     event.preventDefault()
     noteService.create({ content: content.value })
+    content.reset()
   }
- 
+
   const handlePersonSubmit = (event) => {
     event.preventDefault()
-    personService.create({ name: name.value, number: number.value})
+    personService.create({ name: name.value, number: number.value })
+    name.reset()
+    number.reset()
   }
 
   return (
@@ -62,7 +88,7 @@ const App = () => {
 
       <h2>persons</h2>
       <form onSubmit={handlePersonSubmit}>
-        name <input {...name} /> <br/>
+        name <input {...name} /> <br />
         number <input {...number} />
         <button>create</button>
       </form>
